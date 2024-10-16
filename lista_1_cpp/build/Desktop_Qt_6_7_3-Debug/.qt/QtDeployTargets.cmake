@@ -1,0 +1,2 @@
+set(__QT_DEPLOY_TARGET_lista_1_cpp_FILE /home/mateusz-sierakowski/Desktop/cpp/lista_1_cpp/build/Desktop_Qt_6_7_3-Debug/lista_1_cpp)
+set(__QT_DEPLOY_TARGET_lista_1_cpp_TYPE EXECUTABLE)
