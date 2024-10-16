@@ -26,19 +26,19 @@ namespace cpplab{
 template<typename T>
 class vector{
 private:
-    size_t size;
+    size_t size_;
     size_t capacity;
     T *data;
 public:
     using value_type = T;
     // konstruktor który domyślnie nie alokuje żadnej pamięci
-    vector():size(0), capacity(0), data(nullptr){}
+    vector():size_(0), capacity(0), data(nullptr){}
     // dekonstruktor
-    ~vector(){ delete[] data; size = 0; }
+    ~vector(){ delete[] data; size_ = 0; }
     // funkcja do zmiany wymiarów vectora potrzebna do dynamicznego dodawania i usuwania elementow
     void resize(size_t new_capacity){
         T* new_data = new T[new_capacity];
-        for(size_t i = 0; i < size; ++i)
+        for(size_t i = 0; i < size_; ++i)
             new_data[i] = data[i];
         delete[] data;
         data=new_data;
@@ -46,28 +46,39 @@ public:
     }
     // funkcja push back
     void push_back(const T &value){
-        if(size==capacity){
+        if(size_==capacity){
             resize(capacity==0 ? 1:capacity*2);
-            data[size++]=value;
+            data[size_++]=value;
         }
     }
     // funkcja pop back
     void pop_back(){
-        --size;
+        if(size_==0)
+            throw std::out_of_range("Nie mozna usunac");
+        --size_; // zmniejszamy tablice
+        T* new_data=new T[size_]; // tablica zmniejszona o 1
+        for(size_t i=0;i<size_;++i) // kopiowanie elementow z poprzedniej tablicy do nowej bez ostatniego
+            new_data[i]=data[i];
+        delete[] data; // usuwanie starej tablicy
+        data=new_data; // dajemy wskaznik na nowa tablice
+
     }
     // operator [] do dostepu do elementow
     T &operator[](size_t index) { return data[index];}
     // ten sa operator do stalych obiektow
     const T &operator[](size_t index) const{ return data[index];}
     // funkcja size do pobierania aktualnej liczby elementow
-    size_t get_size() const{ return size;}
+    size_t size() const{ return size_;}
 
-    template<typename U>
-    friend auto operator*(const vector<T> &v1, const std::vector<U> &v2){
-        if(v1.get_size() != v2.size())
-            throw std::invalid_argument("Wektory muszą być tej samej wielkości");
-        T result = T();
-        for(size_t i=0;i<v1.get_size();++i)
+    template<typename V1, typename V2>
+    friend auto operator*(const V1& v1, const V2& v2) {
+        // porownywanie rozmiarow
+        if (v1.size() != v2.size())
+            throw std::invalid_argument("Wektory musza miec ta sama wielkosc");
+        using result_type=decltype(v1[0]*v2[0]);  // wynik iloczynu skalarnego
+        result_type result=result_type();  // zmienna wskazujaca
+        // petla do obliczania iloczynu skalarnego
+        for(size_t i=0;i<v1.size();++i)
             result += v1[i]*v2[i];
         return result;
     }
@@ -92,17 +103,19 @@ int main(){
     v1.push_back(1.1);
     v1.push_back(2.2);
     v1.push_back(3.3);
-    for(size_t i=0;i<v1.get_size();++i){ // wyswietlanie
+    for(size_t i=0;i<v1.size();++i){ // wyswietlanie
         std::cout<<v1[i]<<" "; // i sprawdzanie czy wielkosc sie zgadza od razu
     }
     std::cout<<"\n";
     // sprawdzanie dzialania operatora * do mnozenia skalarnego
     std::vector<double> stdVec={1.0,2.0,3.0};
-    double scalar=v1*stdVec;
+    double scalar=v1*stdVec; // sprawdzanie dla cpplab * vector
+    double scalar_2 = stdVec*v1;
     std::cout<<scalar<<"\n";
+    std::cout<<scalar_2<<"\n";
     // sprawdzanie dzialania popa
     v1.pop_back();
-    for(size_t i=0;i<v1.get_size();++i)
+    for(size_t i=0;i<v1.size();++i)
         std::cout<<v1[i]<<" ";
     std::cout<<"\n";
 }
