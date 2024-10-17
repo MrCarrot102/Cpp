@@ -4,7 +4,7 @@
 // zadanie 1
 template<typename T, typename C>
 T my_max(T a, T b, C comp){
-    return comp(a,b) ? b : a;
+    return comp(a,b) ? b : a; // wyrazenie labda jesli true bedzie b jak nie to a
 }
 
 // zadanie 2 złożolność O(n^2)
@@ -61,7 +61,6 @@ public:
             new_data[i]=data[i];
         delete[] data; // usuwanie starej tablicy
         data=new_data; // dajemy wskaznik na nowa tablice
-
     }
     // operator [] do dostepu do elementow
     T &operator[](size_t index) { return data[index];}
@@ -71,17 +70,19 @@ public:
     size_t size() const{ return size_;}
 
     template<typename V1, typename V2>
-    friend auto operator*(const V1& v1, const V2& v2) {
+    friend auto operator*(const V1& v1, const V2& v2){ // definiowanie operatora* jako przyjaciela klasym ktory poznwala na obliczanie iloczyu skalarnego miedzy wektorami
         // porownywanie rozmiarow
         if (v1.size() != v2.size())
             throw std::invalid_argument("Wektory musza miec ta sama wielkosc");
-        using result_type=decltype(v1[0]*v2[0]);  // wynik iloczynu skalarnego
-        result_type result=result_type();  // zmienna wskazujaca
+        // okreslenie typu wyniku ilorazu skalarnego
+        using result_type=decltype(v1[0]*v2[0]);  // decltype zwraca typ wynikowy mnozenia dwoch wektorow
+        // inicjalizacja zmiennej o tym samym typie co wynik mnozenia
+        result_type result=result_type();  // uzywamy domyslnego konstruktora ktory zwraca wartosc normalnca
         // petla do obliczania iloczynu skalarnego
         for(size_t i=0;i<v1.size();++i)
             result += v1[i]*v2[i];
         return result;
-    }
+    } // uzywamy friend aby miec dostep do prywatnych czlonkow klasy z ktora jest powiazany
 };
 }
 
