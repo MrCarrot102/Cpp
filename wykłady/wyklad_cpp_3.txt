@@ -1,0 +1,162 @@
+Wykład 17.10.2024 
+
+Obsługa błedów
+	Podejście tradycyjne
+		sygnalizacja błedów: w zmiennych globalnych, w wartościach funkcji. // czego raczej nie robimy
+		podejście 'stare' errno"
+			if(errno != 0){
+				perror("cos tam cos");
+	Zmienne globalne są złee: zwracanie komunikatów o błędzie w zmiennych globalnych rodzi problemy: na koniec programy mamy tylko informacje o 							ostatnim błędzie, nie wiemy w jakiej wystąpił funkcji,
+	
+	Obsługa błędów w C 
+		int sock = 0;
+		if((sock=socket(AF_INET, SOCK_STREAM, 0))<0)
+		{ 
+			printf("\n error ...");
+			return -1;
+		}
+	
+	Asercje: Mechanizm do samo-diagnostyki kodu
+		-testowanie warunków, które bezwzględnie muszą być spełnione. 
+		-Uwzględnienie wyłącznie w trybie Debug. 
+	
+	#include <cassert> 
+	int dziel(int a, int b){
+		assert (b != 0);
+		return a/b;
+		}
+	int main(){
+	std :: cout << dziel(5,4);
+	std::cout<<dziel(3,0);
+	return EXIT_SUCCESS;	
+	}
+	// 1
+	// int dziel(int,int): Assertion 'b!=0' failed. Przerwanie 
+	
+	assert to makro wyłączane poprzez zdefiniowanie makra preprocesora NDEBUG.
+	g++ -DNDEBUG nazwa.cpp -> 1 "\n" błąd w obliczeniach zmiennoprzecinkowych (zrzut pamięci) 
+	// jesli odpalimy to w release to pominie calkowicie assert(b != 0) program zobaczy tylko średnik; 
+	
+	Zrzut pamięci - coredumptctl
+	
+	Wspinanie się w działający program 
+	
+	int main(){
+	std::cout<<"pid""<<getpid()<<"\n";
+	int i=0;
+	while(i==0)
+		continue;
+	std::cout<<"hello";
+	}
+	//pid = .....
+	//sudo gdb -p .... // w jakiejs innej konsoli
+	//attaching to process ....
+	
+	//set var i=1;
+	//n
+	
+Wyjątki 
+	Składnia 
+	zgłaszanie: 
+		throw obiekt;
+	obsługa:
+		try{
+			// kod mogący zgłosić wyjątek, jakiś obiekt. Np. int, struktura cokolwiek. (dobrze określone obiekty) zgłasza to B a ogarnia to A; klamerki oznaczają, że gdzieś pomiędzy nimi występuje wyjątek 
+		}
+		catch(const Obiekt & obiekt)
+		{...}//chociaz jeden musi być, może być więcej.
+	//nie sa to bledy ale wyjątki czyli program jest poprawny ale z jakiegoś powodu nie może go wykonać do końca 
+	//mamy dwa moduły a i b chcemy coś od b ale to b nie może nam tego przekazać;
+	//A->B B zwraca kod błedu i A musi to sprawdzić i ogarnąć. w C natomiast w cpp B podejmuje akcje jak znajdzie błąd; 
+	//jak nie ogarniemy wyjątku to wywali nam program, z jakimś fajnym komunikatem :);
+	//w profesjonalnym programie musi być obsługa wyjątków;
+	//składnia catch jest prosta bo wygłąda jak definiowanie funkcji w (); 
+	
+	#przykladowy program
+	int dziel(int a, int b){
+		if(b==0)
+			throw std::invalid_argument("dzielenie prze 0);
+		return a/b;
+	}
+	int main(){
+		try{
+			std::cout<<dziel(2,5);
+			std::cout<<dziel(2,0);//na tym zakończy pracę program bo złapał wyjątek;
+			std::cout<<dziel(2,4);//tego juz nie wyświetli bo wywali wyjątek;
+		}
+		catch(const std::invalid_argument& e){
+			std::cerr<e.what();//składowa what to jest to co piszemy w throw i co użytkownik ma zobaczyć; 
+		}
+		return EXIT_SUCCESS;
+	}//1 "\n" dzielenie przez 0; wynik po odpaleniu programu;	
+	
+	zalety wyjątków:
+		wyjątki muszą być obsłużone-nieobsłużony wyjątek powoduje pad programu;
+		wyjątki umożliwiają przekazanie sterowania do miejsca, w którym można obsłużyć problem; 
+		mechanizm zwijania stosu powoduje wywołnie destruktorów wszystkich obiektów lokalnych utworzonych w zakresie ({}) punktu zgłoszenia;
+		wyjątki umożliwiają eleganckie oddzielenie głównego kodu od kodu obsługującego ewentualne "niepowodzenia";
+		
+	Co zgłaszać?:
+		teoretycznie jako wyjątek można zgłosić dowolny obiekt, zmienną, wskaźnik...;
+		w praktyce używa się klas z nagłówka <stdexcept> lub klas z nich wyprowadzanych;
+		<stdexcept> //używamy tego bo mamy tutaj gotowce i można mieć własną przestrzeń nazw; 
+	int main(){
+	my_lib::utils::log::initializ_global_log_level();
+	...
+	try
+	{
+		return my_lib::cli::AppRunner::run(argc,argv);
+	}
+	catch{
+		LOG_FATAL("....",e.what());
+		...
+		return 1;
+	}
+	catch (const std::exception &e)
+	{
+		LOG_FATAL("{}",e.what());
+		...
+		return 2;
+	}
+	catch(...)
+	{
+		...
+		LOG_FATAL("program aborted");
+		return 255;//we should never see that;
+	}
+	//od najbardziej szczegółowych do najbardziej ogólnych catch; 
+	Wyłapywanie wyjątków
+		pod blokiem try może być kilka bloków catch 
+	zwijanie stosu
+		wyjście z każdego zakresu ({}) powoduje uruchomienie destruktorów obiektow lokalnych i zwolnienie przypisanej im pamięci na stosie funkcji;
+		
+Wyjątki a RAII// resource aquisition is initialization zdobywanie zasobów jest inicjalizacją
+	nie (pary funkji)
+	mutex.unlock();	// :(
+	delete [] p;	// :( tak nie pisać tego typu programówl, bo wycieka pamięć w tym progrmie. I nie można na nich dużej pracować. 
+	fclose(in);	// :(
+	
+	tak(obiekty):
+	std::ifstream in("plik.txt");
+	std::vector<int>(100);//musi być nazwany ale tutaj akurat Pan zapomniał;
+	std::lock_quard(mutex) lg;//zarządzanie programami wielowątkowymi, mutex;
+	throwing_fun();//funkcja która może zgłosić wyjątki, wtedy uruchomią się destruktory i nic nie stracimy bo pamięć się wyczyści; 
+	other_fun();//po zgłoszeniu wyjątku nie uruchomi się;
+	//wczytywanie dobre plików to takie które tworzy obiekt; 
+	
+Zero overhead
+	zasada zero overhead oznacza, że jeśli z jakichś udogodnień cpp nie korzystasz, to za nie nie płacisz(np. zwiększonym czasem wykononania programu)
+	jeżeli nie korzystasz z wyjątków, to program działa tak, jakby one nie istniały w języku
+	Obsługa zgłoszonego wyjątku w cpp jest dość kosztowana
+		dlatego nie używaj ich jak alternatywnych instrukcji "if";	
+ RAII a cpp:
+ 	RAII to fundamentalny wzorzec programistyczny charakterystyczny dla cpp; 
+ 		w wcpp sa wyjątki;
+ 		w cpp nie ma garbage collector(odśmiecacza pamięci);
+ 			w większości języków obiektowych są i wyjątki, i garbage collector, więc RAII jest zbędne;
+ 		Nigdy nie zarządzaj zasobami ręcznie, osobno je zdobywając i zwalniając;
+ 		dlo zarządzania zasobami używak obiektów automatyzujących ten proces;
+ 		
+
+	
+	
