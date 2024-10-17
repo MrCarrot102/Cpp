@@ -1,0 +1,210 @@
+specjalizacja pełna dostępna dla szablonów funkcji i klas:
+template <typename T> 
+struct X
+{ 
+	void info() { std :: cout << "x"; } 
+}
+
+template <> 
+struct X<int> 
+{
+	int z;
+	coid info_int() { std :: cout << "int jest piekny";}
+}
+specjalizacjie z szabonem głównym łączy tylko nazwa ( nie ma autymatyzmu ) 
+
+zaawansowana składnia definica wskaźnika czy mnożenie? 
+
+template <typename T> 
+class X { 
+	 X x() 
+	 {
+	 	Y<T>::y * z; // definicja czy wyrażenie 
+	 }
+};
+
+ze względu na możliwość definiowania specjalizacji Y, bez znajomości Y nie można rozstrzygnąć, czy Y::y oznacza typ, czy obiekt ( składową statyczną);
+kompilator zakłada, że chodzi o obiekt; 
+użycie składowej Y jako typu wymaga specjalnej składni;
+
+typename jako deklarator typu 
+class X { 
+	typename T::iterator * it // deklaracja wskaźnika 
+	};
+umożliwia odróżnienie deklaracji wskaźnika od mnożenia 
+	
+T::n * b; // mnożenie przez składową statyczną T::n
+
+void print ( std::bitsetN> const &bs){
+std :: cout << bs.template to_string<char>();
+}
+kontstrukcje .template, ::template i -> template informują kompilator, że następujący po nich identyfikator reprezentuje szablon 
+bez nich kompilator może potraktować <> jako operatory relacyjne 
+Używane tylko w szablonach
+
+to_string<char>() jest składową bs; 
+
+dziedzicznenie szablonu z szabonu 
+template <typename T> 
+struct X{
+T size;
+};
+
+template <typename T>
+class Y : public X<T>
+{
+Y() {
+size * x; // skad wiemy, że klasa bazowa ma składową size? 
+this -> size * x; // OK 
+X{T}::size * x; // OK 
+};
+
+konieczna nazwa kwalifiowana (X<T>:: lub this->);
+
+mataprogramowanie 
+polega na użyciu szablonów oraz reguł gramatyki języka do wymuszenia na kompilatorze wygenerowania kodu źródłowego, skomplikowania go i włączenia wyniku do programu
+może służyć do generowania stałych lub kodu 
+idea: przeniesienie części pracy z czasu wykonania na kompilator 
+run time -> compile time; 
+
+przykład zliczanie bitów 
+template <unsigned char byte>
+struct BITS_SET
+{
+enum {
+B0 = (byte &0x01) ?1:0, // bite mnzoymy bitowo z liczba 1 
+...
+};
+enum{RESULT = B0 + ...+ B7};
+};
+std::cout << BITS_SET<15>::RESULT;
+
+w systemie szesnastkowym 
+0x10(16)
+0 * 16 ^0 + 1 * 16^1  = 2^4; 
+
+cpp z biegiem lat uzyskał nowe, wygodne narzędzia do zastąpienia metaprogramowania prostszym kodem 
+	constexpr;
+	if constexpr;
+	
+constexpr int bist_set(unsigned char c){ // gdybyśmy nie dali constexpr nic by się nie stalo bo optymalizacja by sie zrobila sama sa pewne wyjatki
+	int result = 0; 
+	for(int i = 0; i < 8 ; i++)
+	{
+		unsigned int mask = 1u << i; // maski skladaja się z samych 0 i jednej 1 
+		result += (x & mask) != 0; // jesli false to zamienia sie na 0, true na 1
+	}
+	return result;
+}
+int main()
+{
+	int x = bits_set(9);
+	std::cout << x  << "\n";
+}
+
+
+statyczne rozwijanie wyrażeń
+funkcja -> jedna funkcja asemblera
+
+constexpr jest tylko sugestią dla kompilatora; 
+
+consterxpr jest tylko wskazówką dla kompilatora kompilator nie musi jej repektować, kompilator może włączyć optymalizację "constexpr" nawet bex tego słowa kluczowego
+constexpr dalje gwarancję, że optymalizacja jest możliwa; 
+
+int tab[bits_set(7)]; // jesli w kadratowych to musi być znana dlugość w czasie kompilacji 
+
+SFINE = substitution failure is not an error
+	-można przygotować kilka szablonow. jedne będą kompilować się tylko dla parametrów pożądanych, inne - tylko dla niepożądaych. W ten sposób można odkry klasę, do jakiej należy parametr szablonu. 
+	
+// zawsze jedna z definicji jest bledna i pada bo w cpp ie ma tablic o rozmiarze 0; 
+// dokladnie jeden z poniższych szablonów zawsze "padnie" 
+template <int I> 
+bool even(char(*) [I % 2 == 0] == nullptr) { return true; } // 
+template <int I> 
+bool even(char(*)[I%2==1]== nullptr){return false;} // = przy nullptr to jest wartość domyślna 
+
+int main() 
+{
+	std:;cout << even<7>()<<"\n";
+}
+
+(*) to wskaźnik na tablicę typu H, albo będzie wskaźnik na tablicę 0 elementową albo 1 elementową; 
+Substitution failure is not an error 
+
+dygresja variadic arguments 
+
+enable_if upraszcza SFINAE 
+endable_if warunkowo usuwa przeciążenie funkcji lub specjalizację szablonu 
+
+template<typename T>
+std::endable_if_t<std::is_integral<T>::value> f(T t)
+{
+	std::cout<<" wywolane z argumentem calkowitym";
+}
+template<typename T>
+std::enable_if_t<std::is_floating_point<T>::value> f(T t)
+{
+	std:cout << "wywolane z argumente, zmiennopozycyjnym";
+}
+int main(){
+	f(1); // bedzie pierwszy sablon 
+	f(2.1); // bedzie drugi szablon 
+}
+
+if constexpr upraszcza SFINAE
+if consetexpr waunkowo usuwa z szablonów gałęzie kodu 
+
+template<typename T> 
+void f(T t){
+	if constexpr(std::is_integral<T>::value)
+		...
+	else if constexpr(std::is_floating_point<T>::value)
+		...
+	else 
+		...
+}
+
+
+wsparcie biblioteki standardowej 
+...
+
+
+// szablony wariatyczne 
+variadic template 
+
+template<typename T, typename ...Args>
+T sum(T first, Args... args)
+{
+	if constexpr(sizeof...(args)==0)
+		return first;
+	else 
+		return first + sum(args...);
+}
+
+
+Statyczna kontrola typów 
+cpp jest językiem z silną statyczną kontrolą typów, w wyrażeniach (np x + y) w przekazywaniu argumentów do funkcji; 
+czy można tą konrolą objąć szablony? template<typname T>... żaden szablon nie działa na dowolnym type T, jak zawęzić zbiór dopuszczalnych dla danego szablonu typów T, by błędy użycia szablonów wyłapywać podczas kompilacji?; 
+Koncepty przykład 
+template <typename T> 
+concept hassubscriptoperator = requires(T a)
+{
+	a[0]; // to wyrażenie musi być poprawne
+};
+ 
+template <hassubscriptionoperator T> auto front(const T & t ) // to jest tylko dla tych co spelniają hassubsc...
+{
+	return t[0];
+}
+ 
+nowe slowa kluczone concept, requires
+możliwość definiowania warunków, jakie musi spełniać każdy parametr szablonu 
+łatwiejsza diagnostyka błędów;
+
+koncepty 
+// dwie książki na ten temat. s
+cpp szablony vademecum profesjonalisty 
+cpp templates
+
+ 
+
