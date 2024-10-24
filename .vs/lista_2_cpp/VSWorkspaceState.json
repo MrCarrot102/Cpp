@@ -1,8 +1,0 @@
-{
-  "OutputFoldersPerTargetSystem": {
-    "Maszyna lokalna": [
-      "lista_2_cpp\\out\\build\\x64-Debug",
-      "lista_2_cpp\\out\\install\\x64-Debug"
-    ]
-  }
-}
