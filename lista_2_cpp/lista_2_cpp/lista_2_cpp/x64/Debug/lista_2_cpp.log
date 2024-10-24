@@ -1,0 +1,3 @@
+﻿  lista_2_cpp.cpp
+C:\Users\zsier\OneDrive\Pulpit\Listy Cpp\lista_2_cpp\lista_2_cpp\lista_2_cpp.cpp(15,8): warning C4267: "inicjowanie": konwersja z "size_t" do "int", możliwa utrata danych
+  lista_2_cpp.vcxproj -> C:\Users\zsier\OneDrive\Pulpit\Listy Cpp\lista_2_cpp\lista_2_cpp\x64\Debug\lista_2_cpp.exe

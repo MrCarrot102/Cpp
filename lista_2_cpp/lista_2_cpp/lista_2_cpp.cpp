@@ -1,20 +1,37 @@
-﻿// lista_2_cpp.cpp : Ten plik zawiera funkcję „main”. W nim rozpoczyna się i kończy wykonywanie programu.
-//
+﻿#include <iostream>
+#include <vector>
+#include <cctype> 
+#include <string>
 
-#include <iostream>
-
-int main()
-{
-    std::cout << "Hello World!\n";
+// funkcja do znajdywania liczb w stringach
+int extractNumber(const std::string& str) {
+	std::string numberstr = "";// tymczasowy string dla przechowywania liczb 
+	for (char ch : str) {
+		if (std::isdigit(ch))
+			numberstr += ch;
+	}
+	return numberstr.empty() ? 0 : std::stoi(numberstr);// zwracanie znalezionych liczb przeksztalconych na int 
+}
+// insertion sort typowo dla wektorow stringów
+void insertion_str(std::vector<std::string>& str) {
+	int n = str.size();
+	for (int i = 0; i < n; ++i) {
+		std::string key = str[i];
+		int j = i - 1;
+		while (j >= 0 && extractNumber(str[j]) > extractNumber(key)) {
+			str[j + 1] = str[j];
+			j--;
+		}
+		str[j + 1] = key;
+	}
 }
 
-// Uruchomienie programu: Ctrl + F5 lub menu Debugowanie > Uruchom bez debugowania
-// Debugowanie programu: F5 lub menu Debugowanie > Rozpocznij debugowanie
-
-// Porady dotyczące rozpoczynania pracy:
-//   1. Użyj okna Eksploratora rozwiązań, aby dodać pliki i zarządzać nimi
-//   2. Użyj okna programu Team Explorer, aby nawiązać połączenie z kontrolą źródła
-//   3. Użyj okna Dane wyjściowe, aby sprawdzić dane wyjściowe kompilacji i inne komunikaty
-//   4. Użyj okna Lista błędów, aby zobaczyć błędy
-//   5. Wybierz pozycję Projekt > Dodaj nowy element, aby utworzyć nowe pliki kodu, lub wybierz pozycję Projekt > Dodaj istniejący element, aby dodać istniejące pliku kodu do projektu
-//   6. Aby w przyszłości ponownie otworzyć ten projekt, przejdź do pozycji Plik > Otwórz > Projekt i wybierz plik sln
+int main() {
+	std::vector<std::string> one = { "zadanie 1", "zadanie 11", "zadanie 2", "zadanie 22", "zadanie 3", "zadanie 33" };
+	insertion_str(one);
+	for (const auto& elem : one) {
+		std::cout << elem << " ";
+	}
+	std::cout << "\n";
+	return 0;
+}
