@@ -3,6 +3,7 @@
 #include <cctype> 
 #include <string>
 
+// zadanie 1
 // funkcja do znajdywania liczb w stringach
 int extractNumber(const std::string& str) {
 	std::string numberstr = "";// tymczasowy string dla przechowywania liczb 
@@ -25,6 +26,19 @@ void insertion_str(std::vector<std::string>& str) {
 		str[j + 1] = key;
 	}
 }
+// zadanie 2 
+// definicja ogolna szablonu klasy
+template <int N>
+struct Factorial {
+	static const int value = N * Factorial<N - 1>::value;
+};
+// czesciowa specjalizacja 
+template <>
+struct Factorial<0> {
+	static const int value = 1;
+};
+
+
 
 int main() {
 	std::vector<std::string> one = { "zadanie 1", "zadanie 11", "zadanie 2", "zadanie 22", "zadanie 3", "zadanie 33" };
