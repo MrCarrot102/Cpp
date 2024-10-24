@@ -28,24 +28,32 @@ void insertion_str(std::vector<std::string>& str) {
 }
 // zadanie 2 
 // definicja ogolna szablonu klasy
-template <int N>
-struct Factorial {
-	static const int value = N * Factorial<N - 1>::value;
+template <int N> // szablon który przymuje wartość całkowitą 
+class Factorial{
+public:
+	static const int value=N*Factorial<N-1>::value; // rekurencyjnie silnia 
 };
-// czesciowa specjalizacja 
 template <>
-struct Factorial<0> {
-	static const int value = 1;
+class Factorial<0>{ // definiowanie specjalnego wyjatku dla 0
+public:
+	static const int value=1;
 };
-
-
-
+template <>
+class Factorial<1>{ // specjalizacja dla warunku 1 
+public: 
+	static const int value=1;
+};
+// zadanie 3  variadic templates szabon funkcji print_all
 int main() {
+	// sprawdzanie zadanie 1
 	std::vector<std::string> one = { "zadanie 1", "zadanie 11", "zadanie 2", "zadanie 22", "zadanie 3", "zadanie 33" };
 	insertion_str(one);
 	for (const auto& elem : one) {
 		std::cout << elem << " ";
 	}
 	std::cout << "\n";
+	// sprawdzanie zadanie 2
+	constexpr int n=5; 
+	std::cout<<"Silnia "<<n<<" wynosi: "<<Factorial<n>::value<<"\n";
 	return 0;
 }
