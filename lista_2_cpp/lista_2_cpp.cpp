@@ -44,6 +44,17 @@ public:
 	static const int value=1;
 };
 // zadanie 3  variadic templates szabon funkcji print_all
+void print_all(){} // funkcja bazowa, zakonczenie rekurencji 
+// szablon funkcji do wypisywania argumentow 
+template <typename T, typename... Args>
+void print_all(T first, Args... args){
+	std::cout<<first;
+	if constexpr(sizeof...(args)>0){
+	std::cout<<", ";
+	}
+	print_all(args...);
+}
+
 int main() {
 	// sprawdzanie zadanie 1
 	std::vector<std::string> one = { "zadanie 1", "zadanie 11", "zadanie 2", "zadanie 22", "zadanie 3", "zadanie 33" };
@@ -55,5 +66,11 @@ int main() {
 	// sprawdzanie zadanie 2
 	constexpr int n=5; 
 	std::cout<<"Silnia "<<n<<" wynosi: "<<Factorial<n>::value<<"\n";
-	return 0;
+	// sprawdzanie zadania 3 
+	print_all(1,1.0,1.0f,"hello");
+	std::cout<<"\n";
+	print_all(1,2.0);
+	std::cout<<"\n";
+	
+	return 0; 
 }
