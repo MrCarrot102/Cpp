@@ -1,0 +1,3 @@
+ustawianie capacity = 1 w push_back;
+pop_back() zeby tyle nie robila; 
+operator* mozna za klasa i docltpye przy nazwie funkcji f()->docltype(cost tam) {cos tam};
