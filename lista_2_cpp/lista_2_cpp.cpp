@@ -58,6 +58,9 @@ void print_all(T first, Args... args){
 int main() {
 	// sprawdzanie zadanie 1
 	std::vector<std::string> one = { "zadanie 1", "zadanie 11", "zadanie 2", "zadanie 22", "zadanie 3", "zadanie 33" };
+	/*for(int i=0;i<one.size();++i){
+		std::cout<<extractNumber(one[i])<<"\n";
+	}*/
 	insertion_str(one);
 	for (const auto& elem : one) {
 		std::cout << elem << " ";

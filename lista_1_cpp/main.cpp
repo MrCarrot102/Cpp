@@ -53,14 +53,7 @@ public:
     }
     // funkcja pop back
     void pop_back(){
-        if(size_==0)
-            throw std::out_of_range("Nie mozna usunac");
-        --size_; // zmniejszamy tablice
-        T* new_data=new T[size_]; // tablica zmniejszona o 1
-        for(size_t i=0;i<size_;++i) // kopiowanie elementow z poprzedniej tablicy do nowej bez ostatniego
-            new_data[i]=data[i];
-        delete[] data; // usuwanie starej tablicy
-        data=new_data; // dajemy wskaznik na nowa tablice
+        data[size_--];// zmiana dzialania funckji pop_back() aby nie musiala wykonywać tyle czynności
     }
     // operator [] do dostepu do elementow
     T &operator[](size_t index) { return data[index];}
@@ -68,9 +61,10 @@ public:
     const T &operator[](size_t index) const{ return data[index];}
     // funkcja size do pobierania aktualnej liczby elementow
     size_t size() const{ return size_;}
-
-    template<typename V1, typename V2>
-    friend auto operator*(const V1& v1, const V2& v2){ // definiowanie operatora* jako przyjaciela klasym ktory poznwala na obliczanie iloczyu skalarnego miedzy wektorami
+};
+// zmiana miejsca deklaracji, poza klasa 
+template<typename V1, typename V2>
+    auto operator*(const V1& v1, const V2& v2){ // definiowanie operatora* jako przyjaciela klasym ktory poznwala na obliczanie iloczyu skalarnego miedzy wektorami
         // porownywanie rozmiarow
         if (v1.size() != v2.size())
             throw std::invalid_argument("Wektory musza miec ta sama wielkosc");
@@ -83,7 +77,6 @@ public:
             result += v1[i]*v2[i];
         return result;
     } // uzywamy friend aby miec dostep do prywatnych czlonkow klasy z ktora jest powiazany
-};
 }
 
 int main(){
