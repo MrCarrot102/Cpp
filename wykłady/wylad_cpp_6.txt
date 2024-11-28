@@ -1,0 +1,21 @@
+Co to są dynamiczne strktury danych? 
+	statyczna - kiedy jest znana kompilatorowi  
+	dynamiczna - kiedy kompilatorowi nie jest znana 
+	
+	statyczne zmienie żyją zawsze; 
+		
+	zmiennymi w funkcjach zajmuje się kompilator 
+	
+	w stercie natomiast musimy zarządzać ręcznie, to znaczy że jeżeli coś zainicjalizujemy to musimy to sami usunąć i zwolnić miejsce 
+	w dynamicznych strukturach danych zawsze znajdzie się new; 
+	
+Rekurencja:
+	zasada indukcji matematycznej - mamy jakieś zdanie które zależy od liczby naturalnej T(1) jest prawdziwe; dla każdego naturalnego k>_1 prawdziwa jest implikacja T(k) => T(k+1); to tym samym udowodnimy prawdziwość T(n) dla każdego n >_ 1; 
+	
+	int newton(int N, int k){
+		if ( k == 0 || k == N )
+			return 1;
+			return newton(N, k-1) + newton(N, k);
+	}
+	
+	// algotytmy i struktury dany!!

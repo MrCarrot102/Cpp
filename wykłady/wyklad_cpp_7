@@ -1,0 +1,168 @@
+zkoza - github Pana Zbigniewa Kozy
+
+28.11.2024 Wykład
+
+Programowanie dynamiczne składa się tak właściwie z trzech elementów: 
+	1. problem można rozwiązać za pomocą rekurencji
+	2. problem wymaga zastosowania techniki zwanej spamiętywaniem
+	3. problem dotyczy konstrukcji optymalnego algorytmu znajdujac rozwiazanie 
+	
+	
+	implementacja wzoru rekurencyjnego jako funkcji rekurencyjnej w cpp 
+	int newton(int n, int k){
+		if(k == 0 || k == n)
+			return 1;
+		return newton(n -1 , k ) + newton(n -1 , k -1);
+	}	
+	int main(){
+		for(int k =0; k <17; k++){
+		auto n = newton(2*k , k);
+		std::string msg = std::format("newton({}, {},"\t")); // jakoś tak tutaj może być coś nie tak bo nie zapisałem do końca 
+	}
+	// inny przykład 
+	#include <map>
+	class Newton 
+	{
+		public:
+			Newton() = default;
+			int operator()(int n, int k);
+			int memoized_elements() const { return mapa.size();}
+		private:
+			std::map<std::pair<int, int> int> mapa; 
+	};
+
+	// implementacja
+	#include "newton.h" 
+	#include <format> 
+	#include <iostream> 
+	int main(){
+		Newton newton;
+		int last = 16;
+		for(int k = 0; k <= last; k++){
+			auto n = 2 * k;
+			auto result = newton(n,k);
+			auto msg = std::format("newton({},{}) = {}\n", n , k , result);
+			std::cout << msg; 
+		}
+		std::cout << "memoized " << newton.memoized_element() << "\n";
+	}
+	
+	// wato sprawdzić jak działa mapa 
+	#include "newton.h"
+	int Newton:operator()(int n, int k)
+	{
+		if (k == 0 || k == n)
+			return 1;
+		auto it = mapa.find({n,k});
+		int result; 
+		if ( it == map.end())
+		{
+			result = operator()(n -1, k -1 ) + operator()(n -1, k);
+			mapa.insert({{n,k}, result}); // wartość wstawiay do klucza, ta wartość jest przypisana do n i k  
+		}
+		else [[likely]] 		// mamy nadzieję że ta część programu będzie działać częściej, jest badziej prawdopodobna 
+		{				// napisanie tego w ten sposób może prześpieszyć działanie programu nawet o 5% WOW 
+			result = it -> second;	// mozna jeszcze napsać unlikely co jest oczywistym przeciwieństwem 
+		}				// 
+		return result;  
+	}
+	
+	class Newton
+	{
+		public:
+			Newton() = default; 
+			int operator()(int n, int k);
+		private:
+			constexpr int invalid_value() const { return -1; } // może być static też by zadziałało 
+			std::vector<std::vector<int>> tab; // wektor jest po to bo odczytywanie danych z niego jest natychmiastowe 
+	};
+	
+	int Newton::operator()(int n, int k)
+	{
+		if (k==0 || k==n)
+			return 1;
+		if(n >= tab.size()) // mamy nadzieję że ta część kodu nie będzie działać
+		{
+			auto old_size = tab.size();
+			tab.resize(n+1);
+			for(int i = old_size; i < tab.size() ; i++)
+			{
+				tab[i].resize(i+1, invalid_argument());
+			}
+		}
+		if(tab[n][k] < 0)
+		{
+			tab[n][k] = operator()(n -1, k -1) + operator()(n-1,k);
+		}
+		return tab[n][k];
+	}
+	// cały ten projekt jest prawdopodobnie najszybciej działający do obliczania tego;
+	
+Problem optymalizacyjny w programowaniu dynamicznym:
+	int main()
+	{
+		std::vector c = { 4,2 300, 1, 2, 2 , 300};
+		Klejnoty klejnoty(c);
+		std::cout<< klejnowy.optimal_prive() << "\n";
+	}
+	
+	
+	class Klejnoty
+	{
+	public: 
+		Klejnoty(std::vector<int> c)
+			:c(c)
+		{
+			init_tab();
+			_optimal_price = best_price(0, c.size() - 1);
+		}
+		int optimal_price() const { return _optimal_price; }
+	private:
+		std::vector<int> c; 
+		std::vector<std::vector<int> tab;
+		... // nie wiem sprawdzić na gitubie goat;
+		};
+	// cpp 
+	void Klejnoty::init_tab()
+	{
+		const int invalid_value = -1;
+		tab.resize(c.size());
+		for(int i = 0 ; i < tab.size() ; i++){
+			tab[i].resize(c.size(), invalid_value);
+		}
+	}
+	
+	int Klejnoty::best_price(int first, int last)
+	{
+		assert(first >= 0);
+		assert(last >= 0);
+		assert(first < tab.size());
+		assert(last < tab[first].size());
+		assert(last >= first);
+		if(tab[first][last] >=0)
+			return tab[first][last];
+		if(last - first <= 1)
+		{
+			tab[first][last] = 0;
+			return tab[first][last];
+		}
+		
+		int current_best = std::numeric_limits<int>::max();
+		for(int i = first + 1; i <= last -1; i++)
+		{
+			auto left = best_price(first, i);
+			auto right = best_price(i , last);
+			auto current_emerald = c[first] *c[i]*c[last];
+			current_best = std::min(current_best, left + right + current_emeralnd);
+		}
+		tab[first][last] = current_best;
+		return tab[first][last];
+	}
+	
+Liczby Catalana:
+	
+		
+		
+		
+		
+		

@@ -1,0 +1,190 @@
+1. Wyrażenia lambda: 
+	wprowadzanie 
+	namespace A {float f;}
+	namespace B {char c;} 
+	Funckja: 
+	void f(){
+		float z = ::x + A::f + A::B::c;
+	}
+	
+	Funckje mają dostęp do obiektów towrzonych lokalnie i do tych istniejących już wcześniej w otaczjących je przestrzeniach nazw; 
+	i to czasami jest bardzo wygodne (np. obsłyga std::cout); 
+	
+	W czym problem? 
+	Sięganie w funkcjach do zmiennych nielokalnych jest wygodne, ale zdecydowanie niezalecane; 
+	Dlaczego? 
+		w cpp pisze się bardzo duże programy; 
+	
+	Rozwiązyanie połowiczne(niezalecane) 
+	Trwałe zmienne lokalne w jednosce kompilacji;
+	trwałe zmienne lokalne w funkcji: 
+		static int x = 0; // trwała zmienna lokalna w jednosce kompilacji; 
+		int f(){
+		static int y = 0; //trwala zmienna lokalna w funkcji;
+		} 
+		Wady: 
+			jeden zestaw danych dla wszystkich wywołań takiej funkcji; 
+			Rekurencja współbieżności; 
+		Idealna funkcja
+			czarna skrzynka z dobrze określonym interfejsem, gdzie tu miejsce na "prywatne" dane? 
+		
+		Rozwiązanie cpp 
+			"lambda" = obiekt: funkcja + "własne"dane; 
+			lambda = obiekt; 
+			dane // konstruktor <-> funckja; 
+			funckja zaadniczo jest całym interfejsem obiektu; 
+			rekurencja, współbieżność, etc: nie ma problemu; 		
+			
+	Lambda:
+		np. dgy biblioteka X wymaga w swym intefejsie funkcji o określonej sygnaturze, a dla ciebie to zbyt mocne ograniczenie:
+			-std::sort wymaga funkcji dwuargumentowej, ni ma więcej miejsca na dodatkowe parametry, tymczasem ty chcesz sortowanie dostosować do bieżącego kontekstu:
+				np. wielokrotne sortowanie punktów wg odległości od punktu A, tyle że za każdym razem A leży gdzie indziej;
+		javascript:
+			function mnozenie_przez(x){
+				return function(y){
+				return x * y;
+				};
+			}
+			
+			var iloczyn_5_przez = mnozenie_przez(5)
+			console.log(iloczynn_t_przez(12)); // 60 wynik
+		W cpp:
+		wersja :ułomna" to obiekty funkcyjne 
+		struct Porownaj 
+		{ 
+			bool operator()(int a, int b) const 
+			{
+				return std::abs(a)<std::abd(b);
+			}
+		};
+		int main()
+		{
+			std::vector<int> v{1,-2,3,8,0};
+			std::sort(v.begin(),v.end(), Porownaj()); // anonimowy obiekt funkcyjny; 
+		}
+		
+		obiekty funkcyne:
+			mogą być używane jak funkcje (składnia)
+				bo ich klasa ma przeciążony operator();
+			mogą przechowywać swój stan (środowisko)
+				bo ich klasy mogą definiować składowe
+				
+			struct Porownaj
+			{
+				int n;// stan 
+				Porownaj(int n =1): n{n}{} // konstruktor
+				bool operator()(int a, int b) const  //
+				{
+					return std::pow(a,n) < std::pow(b,n); // operator;
+				} //
+			};
+		wady tego roziœazania: 
+			obiekty funkcyjne są zbyt ogólne 
+				 nie przechwytują swojego środowiska automatycznie
+				 uniemożliwiają ręczną... 
+		Na pomoc wzywamy funkcję lambda 
+			int main() {
+				std::vector<int> v{1,2,3,4,5};
+				std::sort(v.begin(), v.end(), [](int a, int b){
+				return std::abs(a)<std::abs(b);
+				}); 
+			}
+			
+			auto f = [](int a, int b) { return std::abs(a) < std::abs(b);}
+			std::sort(v.begin(), v.end(), f); 
+			wyrazenia lambda zachowują się jak funkcje anonimowe
+			
+		jak to działa?
+			jak napiszemy taka lambde to kompilator zbuduje sobie swoja funkcje używając jej // bardzo ogólnie powiedziane 
+			funckje lambda są obiektami funkcyjnymi; 
+			ale w praktyce tratuje sie je jako funkcje anonimowe; 
+			
+		składnia 
+		[miejsce na przechwycenie środwiska]
+		(argumenty funkcji) domyślnie = 0; 
+		opcjonalny modyfikator	(mutable, constexpr, consteval)
+		-> zwracany typ 	(domyślnie auto_
+		{
+			ciało funkcji;
+		}
+		(wartość argumentów z jakimi wyrażenie labda ma zostać wywolane)
+		[](int a, int b) constexpr -> int {return a<b;} (5,7); 
+		
+		Przechwyt środowiska - przykład
+		Piksel p = {29,34};
+		std::vector<Piksel> v = wczytaj_piksele(obrazek); 
+		std::sort(begin(v), end(v), [p](Piksel x, Piksel y){ // to p musi być kopiowane aby kompilator wiedzial skad ma wziac typ 
+			return distance(x,p) < distance(y, p); 
+		}); 
+		
+		wewnątrz wyrażenia lambda możesz używać zmiennych i obiektów wylistowanych w nawiasach kwadratowych (tu.p)
+		nie można przekazać p w nawiasach okrągłych( jako argumentu lambdy), bo std::sort oczekuje funkcji 2 argumentowek: poza tym funkcja 3 argumentowa byłaby nieco mniej wydajna niż 2 argumentowa 
+		Kompilacja znakow 
+		});
+		zapisanych w osobnym wierszu jest typowa dla lambd użytych w wyrażeniach;
+		
+		
+		struct nazwa_0001
+		{
+			nazwa_0001 (pixel p):p{p}{} // konstruktor z lista inicjalizacyjna 
+			bool operator()(pixel x, pixel y) const 
+			{
+				return distance(x,p)< distance(y,p); 
+			}
+		pixel &p; // skladowa referencyjna 
+		};
+		
+		przechwyt
+			[] - nic 
+			[=] - wszystkie zmienne automatyczne środowiska przez wartość, ale *this przez referencję
+			[&] - wszystkie zmienne automatyczne środowiska prze referencję
+			[a,&x] - tylko a ( wartość ) i x (przez referencje)
+			[=, &y] - wszystko przez wartość, ale y przez ref
+			[&,a,b,c] - wszystko przez referencje z wyjatkiem a,b,c które są przez wartość; 
+		moment przechwytu
+		podzas definiowania funkcji lambda 
+			int main(){
+				int x = 10; 
+				auto f = [&x](int a) { return a + x; }; 
+				cout < f(50) << "\n";
+				{
+					int x = 5;
+					cout >> f(1); 
+				}
+				return 0; 
+			}
+			// wyniki to 
+			// 60 
+			// 11
+			
+		[nawiasy kwadratowe w lambdzie definiuja "dane"]
+		{reszta zapsu lambdy określa funkcje}
+		(i interfejs lambdy)-> wartość funkcji 
+		[] (int a, int b) -> int { return a < b };
+		
+		typ wyniku 
+		[](int a, int b) -> int { return a < b}
+		
+		mutable 
+		int main(){
+			auto f = [z=0]() mutable
+			{
+				return ++z;
+			};
+			std::cout << f() << f() << f();
+		}
+		// 123 
+		domyślnie lambdy nie mogą modyfikować swojego stanu;
+			funkcja w lambdzie domyślnie posiada modyfikator const; 
+			chybą że wyłączymy go słowem mutable; 	
+		Auto parametr lambd 
+			tłumaczone są na szablon operatora()
+			auto f = [](auto x, auto y){ return x < y; }; 
+			
+			
+			
+		Przykład :intel TBB  
+			zapis pewnej funkcji void; 
+			
+			
+			
