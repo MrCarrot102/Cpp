@@ -1,5 +1,13 @@
 ﻿#include <iostream>
 #include <utility>
+													// klasa pixel 
+struct pixel {
+	int r, g, b;
+	pixel(int r, int g, int b) : r(r), g(g), b(b) {
+		std::cout << "Pixel(" << r << ", " << g << ", " << b << ")\n";
+	}
+	~pixel() {}
+};
 
 namespace cpplab {
 	template<typename T>
@@ -8,6 +16,19 @@ namespace cpplab {
 		T* data;
 		size_t size;
 		size_t capacity;
+													// funkcja pomocnicza do emplace_back
+		void reserve(size_t new_capacity) {
+			if (new_capacity > capacity) {
+				T* new_data = static_cast<T*>(::operator new(new_capacity * sizeof(T)));
+				for (size_t i = 0; i < size; ++i) {
+					new (&new_data[i]) T(std::move(data[i]));
+					data[i].~T(); // desktruktor dla starego typu
+				}
+				::operator delete(data);
+				data = new_data;
+				capacity = new_capacity;
+			}
+		}
 	public:
 													// domyslny konstrukor 
 		vector() : data(nullptr), size(0) {}
@@ -73,6 +94,21 @@ namespace cpplab {
 			}
 			std::cout << "\n";
 		}
+													// funkcja emplace_back 
+		template<typename... Args>
+		void emplace_back(Args&&... args) {
+			if (size >= capacity)
+				reserve(capacity == 0 ? 1 : capacity * 2);
+			new (&data[size]) T(std::forward<Args>(args)...);
+			++size;
+
+		}
+		int get_size() {
+			return size; 
+		}
+		T& operator[](size_t index) {
+			return data[index];
+		}
 	};
 }
 
@@ -104,9 +140,16 @@ int main() {
 	// dlaczego nie uzywamy memcpy
 	// jest to funkcja niskopoziomowa, ktora kopiuje dane w pamieci bit po bicie, ale w przypadku obiektow z dynamicznie alokowanymi zasobami
 	// lub nietrywialnym zarzadzaniem pamiecia jej uzycie moze prowadzic do powaznych problemow.
-
-
-
-
+	// sprawdzanie emplace_back 
+	std::cout << "Sprawdzanie pixela \n";
+	std::cout << "\n";
+	cpplab::vector<pixel> wektor6;
+	wektor6.emplace_back(255, 0, 0);
+	wektor6.emplace_back(0, 255, 0);
+	wektor6.emplace_back(0, 0, 255);
+	for (size_t i = 0; i < wektor6.get_size(); ++i) {
+		std::cout << "Pixel " << i << ": ("
+			<< wektor6[i].r << "," << wektor6[i].g << ", " << wektor6[i].b << ")\n";
+	}
 	return 0;
 }
