@@ -1,6 +1,7 @@
 #include <iostream>
 #include <memory>
-
+#include <vector> 
+#include <algorithm> 
 
 // zadanie 1 
 class BST{
@@ -97,6 +98,27 @@ namespace cpplab{
     };
 }
 
+// zadanie 3
+// funkcja do obliczania maksymalnej wartosci skarbow
+int knapsack(int W, const std::vector<int> &weight, const std::vector<int> &values, int N){
+    std::vector<std::vector<int>> dp(N+1, std::vector<int>(W+1,0));
+    // wypelnianie tabeli dynamicznego programowania 
+    for(int i = 1; i<= N; i++){
+        for(int w = 1; w <= W; w++){
+            if(weight[i-1] <= w){
+            // maksimum z dwoch przypadkow
+            // 1. nie bierzemy biezacego skarbu
+            // 2. bierzemy biezacy skarb 
+            dp[i][w] = std::max(dp[i-1][W], dp[i-1][W-weight[i-1]]+values[i-1]);
+            } else {
+                // nie mozna wziac biezacego skarbu bo waga przekracza limit
+                dp[i][W] = dp[i-1][w];
+            } 
+        }
+    }
+    // maksymalna wartosc znajduje sie w w tym dp[n][w]
+    return dp[N][W];
+}
 
 
 int main(){
@@ -115,8 +137,14 @@ int main(){
         std::cout << "ptr jest pusty\n";
     ptr2.reset(new int(100));
     std::cout<<"Nowa wartosc: "<< *ptr2 << "\n";
+    // zadanie 3 
+    int N = 3, W = 50; 
+    std::vector<int> weights = {10,20,30}; // wagi skarbow
+    std::vector<int> values = {60,100,120}; // wartosc skarbow 
 
-
+    int result = knapsack(W, weights, values, N);
+    std::cout << "Zadanie 3 odpowiedz: \n";
+    std::cout<<result<<"\n";
 
 
     return 0; 
