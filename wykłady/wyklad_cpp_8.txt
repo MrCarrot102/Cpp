@@ -1,0 +1,152 @@
+Wykład 12.12.2024
+
+Race condition, czyli wyścig
+	wyścig zawsze jest błędem!;
+
+Deadlock, czyli zakleszczenie:
+
+Sekcja krytyczna, mutex (blokada):
+	słowa kluczowe: mutex, lock, critical section;
+	thread 1:
+		(zakładanie blokady);
+		read value;
+		increase value;
+		weite back;
+		(zdejmowanie blokady);
+
+Operacja / zmienna atomowa:
+	operacja, która nie może być przerwana i której postęp podczas kolejnych faz jej wykonywania nie jest widoczny dla innych wątków, aż do jej zakończenia - eliminacja wyścigu;
+	zmienna tomowa to zmienna, na której wszystkie poeracje są atomowe; //atomowe czyli nie przerywalne operacje); 
+
+Asynchroniczność, synchroniczność: 
+	program synchroniczny zachowuje się eterministycznie: znając jego stan w chwili t można przewidzieć jego stan w chwili t+1;
+	Program asynchroniczny działa niedeterministycznie: 
+		- zależność od dyspozytora // schredure? coś takiego;
+
+Granularity: 
+	Fine-grained parallelism:
+		- problem rozbity na bardzo dyżo małych, podobnych zadań; // taki trochę autobus wolno ale dużo;
+	Coarse-grained parallelism:
+		- problem rozbity na małą liczbę (różnych), niezależnych od siebie zadań; // jakieś sprotowe auto szybo ale mało; 
+	Embrrassingly parallel problem:
+		- zadania są od siebie (praktycznie) niezależne; // cała flota aut, nie muszą się ze sobą synchornizować działają niezależnie od siebie;
+
+Latencja, przepustowość: 
+	- latencja (opóźnienie "lag") informuje jak długo trwa otwieranie; 
+	- przepustowość informuje o maksymalnym strumieniu przepuszczanym przez urządzenie; 
+
+Programowanie współbieżne;
+
+OpenMP: 
+	- główna idea: 
+		niech kompilator automatycznie zrównolegli kod; 
+		jest zintegrowanie;
+		ustandaryzowana;
+	- obszar zastosowań:
+		system wielowątkowe z pamięcią współdzielną; 
+	- pierwotni użytkownicy:
+		inżynierowie, c, c++, fortran, technologia otwarta("open");
+	
+	- implementacja:
+		rozszerzenie kompilatora (bez zmian w składni języków programowania):
+			c,c++, #pragma
+		biblioteka:
+			c,c++, #include <omp.h>
+		zmienne środowiskowe; 
+	- założenia projektowe: 
+		- openmp ma być efektywne w działaniu oraz łatwe w nauce i stosowaniu ("technologia dla inżynierów")
+		- openmp ma "chować" przed programistą większość trudności związanych z programowaniem wspóbieżnym 
+	
+	// przyklad uzycia #pragma; 
+	#include <omp.h>
+	#include <iostream>
+	
+	int main(){
+		std::cout << "witaj swiecie";
+		#pragma omp parallel
+			{
+		#pragma omp single 
+				std::cout << "Uruchomiono " << omp_get_num_threads() << "watków\n";
+		#pragma omp for 
+				for(int i = 0; i < 10; i++)
+				{
+		#pragma omp critical // wszystko musi zostać wykonane, nawet jeśli mamy mniej wątków; 
+				std::cout << "i = " << i << ", watek " << omp_get_thread_num() << "\n"; 
+				}
+			}
+			std::cout << "Zegnaj swiecie";
+		}
+		
+		kompilowanie: g++ -fopenmp main.cpp // do kompilacji potrzebujemy flagi, bez tej flagi program nie czyta #pragma, cyzli mamy zwykły jedno wątkowy program; 
+		ale wywali nam błędy w linikach gdzie odwołujemy się do jakiejś funkcji z omp bo jej nie ma zaimplementowanej; 
+		po uruchomieniu programu kolejność jest nie znana za każdym razem będzie inaczej; 
+	
+	- kompilacja 
+		zależy od kompilatora
+			- gcc, clang flaga -fopenmp
+			-cmake: 
+				find_package(OpenMP REQUIRED)
+				link_libraries(OpenMP::OpenMP_CXX)
+				target_link_libraries(my_program PRIVATE OpenMP::OpenMP_CXX)
+	
+	Pragmy:
+		#pragma - pragma directive controls implementation-specific begavior of the compiler, such as disabiling compiler warnings or changing alignment requirements. any pragma that is not recognized is ignored; 
+		przykład 
+			#pragma GCC poison printf sprintf fprintf; 
+	
+	Pragmy są przetwarzane tylko w trybie OpenMP:
+		- ten sam kod można kompilować jako szeregowy lub równoległy, bez modyfikacji źródeł;
+	
+	#pragma omp parallel:
+		- Uruchamia pulę wątków współbieżnych 
+	
+	Pragma z dodatkowymi argumentami: 
+		if, num_thread, default, private, shared, ... 
+		
+	Pragma omp single:
+		Instrukcja sterowana tą pragmą wykonywana jest przez jeden wątek (nie wiemy a priori, który)
+		po tej instrukcji domyślnie generowana jest bariera; 
+	
+	#pragma omp master:
+		instrukcja sterowana tą pragmą wykonywana jest przez wątek nr 0;
+		nie generuje się bariery;
+	
+	#pragma omp critical
+		definiuje sekcję krytyczną; 
+		zastępuje mutex.lock() i mutex.unlock();
+	
+	#pragma omp for // w petli nie zmieniamy i (zmiennej sterujacej) możemy tylko czytać; 
+		instruuje kompilator, że instrukcja for ma być wykonywana przez grupę wątków;
+		domyślnie wykonanie pętli dzielone jest statycznie między wątki tak, by każdy miał mniej więcej tyle samo pracy;
+		Statycznie = "przez kompilator"; podział pracy jest zawsze taki sam;
+		
+	#pragma omp for schedule
+		pozwala doprezycować żądany podział pracy między wątki; 
+		static, dynamic, runtime, guided; 
+		#pragma omp for schedule(static, 3) // segment size (opt.)
+	
+	Funkcje OpenMP
+		#include <omp.h>
+		omp_get_num_threads() // ile jest watków
+		omp_get_thread_num() // pobieramy numer watku 
+		omp_get_max_thread() // pobieramy maksymalna dostepna liczbe wątków
+		
+	przyklad 
+	int main(){
+		double suma  0.0;
+		#pragma omp parallel
+		{
+		#prgma omp for reduction(+:suma)
+			for(int i = 1; i < 2'000'000'000;++i)
+				suma += 1.0 /i; // tworzenie lokalnej zmiennej suma i na końcu dodawanie ich wszystkich do siebie i za kazdym razem będziemy mieli trochę inny wynik; 
+		}
+		std::cout<<"suma=" << suma; 
+	}
+	
+	redukcja; 
+	jeśli chcemy mieć dwa niezależne zadania sections i każda sekcja będzie na innym wątku i wykona się to jednocześnie; 
+	#pragma omp sections; 
+	
+	
+	
+	
