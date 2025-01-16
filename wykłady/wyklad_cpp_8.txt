@@ -89,7 +89,7 @@ OpenMP:
 				link_libraries(OpenMP::OpenMP_CXX)
 				target_link_libraries(my_program PRIVATE OpenMP::OpenMP_CXX)
 	
-	Pragmy:
+	Pragmsmy:
 		#pragma - pragma directive controls implementation-specific begavior of the compiler, such as disabiling compiler warnings or changing alignment requirements. any pragma that is not recognized is ignored; 
 		przykład 
 			#pragma GCC poison printf sprintf fprintf; 
