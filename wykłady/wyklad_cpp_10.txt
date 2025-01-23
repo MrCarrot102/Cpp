@@ -1,206 +1,143 @@
-Wykład 16.01.2025
+#include <wykład_cpp_23.01.2025>
 
-Modele pamięci: 
-	pamięć współdzielona; 
+Obsługa wątków nienazwanych{
+	std::thread i std::jthread podlegają move semantics; 
+	nie można ich kopiować;
 	
-	wątki i procesy; 
-	
-	przetwarzanie: 
-		szeregowe;
-		współbieżne; 
-		równoległe;
-		równoległe i wspołbieżne;
-	
-	wielozadaniowość: 
-		z wywłaszczeniem ([reemptive);
-		ze współpracą (cooperative);
-	
-	główna łatwość: 
-		komunikacja jest prosta - wątki tego samego procesu mają dostęp do tej samej pamięci ram (wirtualnej);
+	Jak "skopiować" nazwane wątki?{
+		nie można workers.push_back(th); // to nie będzie działać
 		
-	główna trudność: 
-		bezpieczna wymiana informacji - nigdy nie wiemy, kiedy nasz wątek zostanie wywłaszczony;  (to nie program decyduje który wątek wykona daną część); 
-		- program może stać się niedeterministyczny; 
-		- SYNCHRONIZACJA; 
+		std::move{
+			musimy jawnie wskazać, że chcemy do wektroa przesunąć (a nie skopiować) nazwany obiekt (I-wartość); 
+			std::move - "unieważnia" przenoszony obiekt dlatego jego destruktor nie wywoła terminate; 
+		}
+
+	Przekazywanie parametrów do wątków które uruchomiliśmy{
+		Przez wartość{
+			void th_fun(int i){
+			} // jakaś funkcja która wymaga wartości
+
+			std::jthread th ( &th_fun, i); // & - nie musi być, i to jest właśnie ta wartość funkcji którą chcemy przekazać
+			workers.emplace_back(std::move(th)); 
+		}
+
+		Przez referencję std::ref{
+			void th_fun(int &i){
+			}
+
+			std::jthread th (&th_fun, std::ref(i));  // przekazywanie przez referencje = race condition itd; 
+
+		}
 		
-Wielowątkowość: 
-	pierwszy program:
-	
-	#include <iostream>
-	#include <thread> 
-	
-	void my_fun(){
-		std::cout << u8"hello world\n";
-	}
-	
-	int main(){
-		std::thread th(&my_fun);  // mniej więcej gdzieś tutaj powinien zaczynać się drugi wątek; 
-		std::cout << "Hello world \n";
-		th.join(); // należy ręcznie zamknąć wątek, bo inaczej zamykał by to destruktor ale tutaj nie; 
-	}
-	// definicja obiektu zarządzaącego funkcją wywoływaną współbieżnie; 
-	// synchronizacja z wątkiem głównym; 
-	// nie wiadomo który wywoła się szybciej, mogą nawet wywołać się w tym samym czasie; 
-	
-	Fork & join; // rozdzielenie a później połączenie;
-	Ale nie mamy pewności, że dojdzie do rozdzielenia; 
-	
-	przykład 2: 
-	#include <iostream>	// std::cout 
-	#include <thread>	// std::thread, std::this_thread::sleep_for
-	#include <chrono> // std::chrono::seconds 
-	
-	
-	void pause_thread(int n){
-		std::this_thread::sleep_for(std::chrono::seconds(n));
-		std::cout << "pause of" << n << "seconds ended\n";
-	}
-	int main(){ 
-		std::cout << "pawning 3 threads..\n"; // 1
-	
-		std::thread th1(pause_thread, 1);		 // 3
-		std::thread th2(pause_thread, 2); 	// 4
-		std::thread th3(pause_thread, 3);		// 5
+		Dygresja: Jak to działa?{
+			konstruktor std::thread zaimplementowano jako tzw. variadic template: szablon o dowolnej liczbie parametrów; 
+		}
+
+		Przykład{ // dlaczego jest źle napisany
+			program w 2 wątkach wyznacza liczbę wystąpień danej cyfry(0..9) w wektorze v; 
+			argument map przekazywany jest przez referencje; 
+		}
 		
-		std::cout << "done spawning threads \n";	// 2
+		Dygresja std::ref i std::cref {
+			są to "wrappery" dla argumentów szablonów funkcji; 
+			
+			int x; 
+			foo(std::ref(x)); // T jest zmieniane z int na int&; 
+
+			int x; 
+			foo(std::cref(x)); // T...
+		}
+
+		dlaczego "&" jest niebezpieczna?{ 
+			przekazyhąc dnae przez referencję lub wskaźnikm tworzymy symulację, gdy wątek może operować bezpośrednio na (lokalnch) zmiennych cudzego wątku; 
+		}
 		
-		th1.join();
-		th2.join();
-		th3.join();
+		const&{
+			stała referencja jest tylko proteza; 
+		}
+
+		co zaminast &{ 
+			kopiowanie danych do wątków roboczych;
+		}
+
+		jak przekazać dane z wątku roboczego?{
+			promise and future; // pasywne czekanie, dużo wydajniejsze niż aktywne czekanie, które marnuje zasoby komputera
+		}
 		
-		std::cout << "All threads joined\n";	// 6
-		return 0;
-	}
-		// kolejność wyświetlania w konsoli; 
-	
-	funkcja składowa join...;
-	
-	Co, jeśli zapomnimy o join? 
-		program "pada"; 
-		~thread(){
-			if(joinable()){
-				std::terminate();
+		przykład{
+			Dane dane; 		// zmienna globalna 
+			bool ready = false; 	// zmienna globalna 
+			// wątek 1 
+			while(!ready){ 		// tutaj jest problem
+				continue;	// aktywujemy watki które cały czas pracują
+				use(dane);	// aktywne nasłuchiwanie, nie powinniśmy pisać takich rzeczy!
+			}
+			// wątek 2
+			dane = factory.make(); 
+			ready = true; 
+		}
+
+		kanał komunikacyjny {
+			future -> shared state;
+			promise -> future; // promise -> shared state	// watek 1 
+			jeśli odpalimy 2 wątek to wtedy promise przenosimy na drugi watek; // tzw. watku roboczego 
+			future zotaje w głównym wątku; 
+			
+			po ustawieniu .set_value(...); // przechodzi w taki tryb zombie
+			ale aktuwyje się shared state; // auto val = 
+			future też będzie jednorazowego użytku; // .get()
+			
+		}
+
+
+		przykład{ 
+			#include <iostream>
+			#include <string>
+			#include <thread. 
+			#inlude <future> 
+
+			void my_fun(std::promise<std:string> prms){
+				prms.set_value(std::string("cos\n");
+			}
+
+			int main(){
+				std::promise<std::string> prms;
+				std::future<std::string> fut = prms.get_future();
+				std::jthread th(&my_fun, std::move(prms));
+				std::cout << "main pretends working..."; 
+				std::string str = fut.get(); // nie przejdę przez ta funkcję jak nie dostanę danych
 			}
 		}
-	Dlaczego join nie jest wywoływane w destruktorze? 
-		jeśli w wątku głównym zgłoszono by wyjątek,
-			-to destruktor urochomiłby join; 
-			-co utworzyłoby barierę na wątku głównym; 
-			-w tym czasie wątek roboczy mógłby czekać na dane z wątku głównego; 
-			// deadlock - zakleszczenie; 
-	
-	c++20: jthread;
-		std::jthread to joinable thread;
-		w jego destruktorze wywoływana jest funkcja składowa join;
-			-zgodność z RAII // RAII ważne (co to dokładnie znaczy)!;
-			-wywołanie join w destruktorze jest bezpieczne; 
-		uwzględnia synchronizację awaryjną;
-			-std::stop_token;
-	
-	przypomnienie RAII: 
-		zasoby zdobywaj w konstruktorze, zwaliaj je w destruktorze; 
-		jeden zasób - jeden obiekt; 
-
-	zamiast funkcji może być lambda; 
-	int main(){
-	std::jthread th([]()
-	{
-		std::cout << "Witaj świecie\n";
-	});
-	std::cout << "Hello world\n";
-	}
-	
-	grupa wątków: 
-		std::thread i std::jtread podlegają move semantics; 
-		nie można ich kopiować; 
-		// obiekt jest nienazwany, więc podlega przenoszeniu a nie kopiowaniu; 
-		// constexpr void push_back( T&& value); 
-		
-		int main(){
-			const int N = 10;
-			std::vector<std::jthread> workers;
-			for(int i = 0; i < N; i++){
-				workers.push_back(std::jthread([]()
-				{
-					std::cout << "witaj świecie\n";
-				}));
+		obsługa wyjątków{ 
+			try {
+				std::string str("cos); 
+				prms.set_value(str); 			// wątek główny main()
+				prms.set_value(str); // throw std::future_error
 			}
-			std::cout << "hello world\n";
+			catch(std::exception &){
+				std::cout <<"problem"; // wątek poboczny, catch()
+			}
+
+			obsługa wyjątków - standardowa, o ile nie musimy ich przekazywać do wątku głównego...
+			
+			try{
+				std::string str("cos");
+				throw std::runtime_error("");
+				prms.set_value(str); // nigdy się nie wywoła
+			}
+			wyjątek przed promise::set_value(){
+				należy wyłapać; 
+				ustawić w obiekcie std::promise{ 
+					- funkcją set_exception); 
+					- używaj std::current_exception(); 
+					- po ustawieniu wyjątku w "shared state" obiekt std::future przerywa blokadę i zgłasza ten wyjątek w swoim wątku; 
+				}
+				wyjątek po (nie) promise::set_value(){ // nie robimy tak! bo nie jesteśmy w tanie zapewnic synchronizacji
+					std::promise może zapisać albo wartość, albo wyjątek, ale nie oba naraz; 
+					bo std::future już mógł zwolnić barierę; 
+				}
+
 		}
+	}		
+}
 	
-	preferuj emplace_back
-		push_back - kopiuje lub przenosi;
-		emplace_back - tworzy; 
-		// obiekt jest od razu tworzony na końcu wektora - nie jest więc ani kopiowany, ani przenoszony; 
-			
-	wyścig (race condition) 
-		wyścig to sytuacje, gdy wynik działania kilku procesów lub wątków zależy od względnej kolejności wykonywania poszczególnych  operacji w każdym z nich; 
-		- kika wątków w tym samym czasie usiłuje modyfikować ten sam zasób;
-	
-	wyścig = błąd; 
-		program, w którym zachodzi wyścig: 
-			jest niedeterministyczny; 
-			jest niezwykle trudny do testowania;
-			jest błędny; 
-		diagnostyka wyścigu jest trudna, dlatego lepiej zapobiegać niż leczyć; 
-	
-	Thread safety
-		wątki muszą wywoływać fukcję, które są thread-safe, czyli: 
-			nie używają zmiennych globalnych lub statycznych; 
-			a jeśli używają, to chronia je przed wyścigiem;
-		popularne funkcje, które nie są thread-safe:
-			rand();
-			wszystkie klasyczne operacje we/wy; 
-		// unikaj obiektów globalnych i statycznych (albo zrezygnuj z wielowątkowości);
-	
-	Unikanie wyścigu w operacjac we/wy: 
-		int main() {
-		const int n = 10; 
-		std::vector<std::jthread> workers; 
-		for(int i = 0 ; i < n ; i++){
-			workers.emplace_back(std::jthread([i]()
-			{
-				std::osyncstream(std::cout);
-				out...
-				
-	Alternatywna synchronizacja we/wy; 
-		każdy wątek musi mieć własne wrappery; 
-		std::cout będzie uruchomiony destruktorem out; 		
-	
-	Diagnostyka:
-		program: 
-		int x = 0; 
-		void my_fun(){
-			x++;
-		}
-		int main(){
-			std::jthread th(&my_fun);
-			my_fun();
-			return x;
-		}	
-		// czasami program pokaże 2, a czasami 1 nigdy nie wiadomo :(;
-		
-	Debugowanie 
-		-gdb; // ważne aby umieć (bo tak nie pytajcie);
-		-QTCreator;
-	
-	Uwaga: 
-		standard obsługi wątków w cpp jest w pewnym stopniu wrapperem podzbioru standardu pthreads (posix threads) biblioteki C. 
-		 	- lektura dokumentacji pthreads może pomóc w zrozumieniu działania wątków w cpp; 
-		 	- pthreads mozna używać w innych językach;
-	
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
