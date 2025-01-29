@@ -1,0 +1,36 @@
+1. Wyrażenia Lambda 
+	a) Notacja - Wyrażenia lambda to anonimowa funkcja, która może być zdefiniowania w miejscu użycia. Składa się z: 
+		* Listy przechwytywania: Określa, które zmienne z otoczenia są dostępne w lambdzie; 
+		* Parametrów: Argumenty przekazywane do lambdy;
+		* Typu zwracanego: Opcjonalny, kompilator może go wywnioskować; 
+		* Ciała funckji: Kod, który zostanie wykonany; 
+
+		Przykład: 
+			auto lambda = [](int a, int b) -> int { return a + b; }; 
+			std::cout << lambda(2,3); // wynik 5
+	
+	b) Lista przechwytywania 
+		* [=] - Przechwytuje wszystkie zmienne z otoczenia przez wartość; 
+		* [&] - Przechwytuje wszystkie zmienne przez referencję;
+		* [a, &b] - Przechwytuje a przez wartość, b przez referencję; 
+		* [a = b] - Tworzy nową zmienną a i inicjalizuje ją wartością b; 
+		Przykład: 
+			int x = 10, y = 20; 
+			auto labda = [x, &y]() { y += x; }; 
+			lambda(); 
+			std::cout << y; // wynik 30
+
+	c) Przykłąd z std::sort
+		std::vector<std::pair<int, int>> vec = {{1,4},{2,3}}; 
+		std::sort(vec.begin(), vec.end(), [](const auto& a, const auto& b){ return a.second < b.second; // sortowanie po drugim elemencie pary 
+		});
+
+	d) Związek z obiektami funkcyjnymi - Lambdy są skróconym zapisem klas funkcyjnych. Kompilator generuje klasę z przeciążonym operator(). 
+		Przykład: 
+			class GeneratedFunctor{
+				public: 
+					int operator()(int x) const { return x * 2; }
+				};
+				GeneraedFunctor functor; 
+				std::cout << functor(5); // wynik 10
+	

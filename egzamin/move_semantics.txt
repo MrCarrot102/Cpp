@@ -1,0 +1,38 @@
+2. Semantyka przenoszenia (move semantics) 
+	a) Kategorie wartości: 
+		* l-value - Obiekty z nazwą i adresem (np. zmienne); 
+		* r-value - Tymczasowe obiekty (np. wyniki funkcji);
+		* x-value - "Eksploatowane" l-value (np. "std::move(x)), które można przenieść. 
+
+	b) Referencje 
+		* T& - Referencja do l-value; 
+		* T&& - Referencja do r-value (umożliwia przejęcie zasobów) 
+		Przykład: 
+			void process(int& x) { std::cout<<"l-value"<<x<<"\n";
+			void process(int&& x) { std::cout<<"r-value"<<x<<"\n";
+			int a = 10; 
+			process(a); // l-value: 10; 
+			process(20); // r-value: 20; 
+			process(std::move(a)); // r-value: 10;
+	
+	c) Reguła Trzech i Pięciu
+		* Reguła Trzech - jeśli definiujesz destruktor, konstruktor kopiujący lub operator przypisania, zdefiniuj wszystkie trzy;
+		* Reguła Pięciu - Dodaj konstruktor przenoszący i operator przypisania przenoszącego; 
+
+	d) std::move - Konwertuje l-value na r-value, uniemożliwiając wywołanie operacji przenoszenia: 
+		Przykład: 
+			std::string s1 = "Hello"; 
+			std::string s2 = std::move(s1); // s1 jest teraz puste; 
+			std::cout << s1; // wynik: pusty string; 
+	
+	e) Copy Elision i NRVO - Optymalizacje kompilatora usuwające zbędne kopiowanie: 
+		* Copy Elision - Pominięcie kopiowania tymczasowych obiektów; 
+		* NRVO (Named Return Value Optimization) - Zwracanie lokalnej zmiennej bez kopiowania; 
+
+	f) Znaczenie dla std::vector, a std::complex 
+		* std::vector ma dynamiczną pamięć - przenoszenie jest tanie (O(1)); 
+		* std::complex to mały obiekt na stosie - przenoszenie nie różni się od kopiowania; 
+	
+	g) Konstruktor przenoszący - Wywoływany, gdy inicjalizujemy obiekty z r-value (np. std::move(x) lub tymczasowy). Przenosi zasoby zamiast je kopiować; 
+
+	h) Referencja uniwersalna - T&& w kontekście szablonu, która może wiązać się z l-value i r-value (np. auto&&); 
